@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 운세</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+            animation-delay: 4s;
+        }
+        
+        /* 스크롤바 숨기기 (선택사항) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="relative min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-slate-800 font-sans overflow-hidden flex flex-col items-center justify-center m-0">
+
+    <!-- Background Decor -->
+    <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob pointer-events-none"></div>
+    <div class="fixed top-[20%] right-[-10%] w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000 pointer-events-none"></div>
+    <div class="fixed bottom-[-20%] left-[20%] w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000 pointer-events-none"></div>
+
+    <!-- Main Content Area -->
+    <div class="relative z-10 w-full max-w-md p-6 flex flex-col items-center min-h-[400px]">
+        <!-- Title -->
+        <h1 class="text-4xl font-bold tracking-tight text-indigo-900 mb-12 text-center drop-shadow-sm">
+            오늘의 운세
+        </h1>
+
+        <!-- View Transition Area -->
+        <div class="flex-1 flex flex-col items-center justify-center w-full min-h-[200px]">
+            
+            <!-- Main Button View -->
+            <div id="main-view" class="w-full flex justify-center transition-all duration-300">
+                <button
+                    onclick="handleShowFortune()"
+                    class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full hover:from-indigo-600 hover:to-purple-700 hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                >
+                    <span class="text-xl">운세 확인하기</span>
+                    <div class="absolute inset-0 h-full w-full rounded-full border-2 border-white/20"></div>
+                </button>
+            </div>
+
+            <!-- Fortune Result View (Hidden by default) -->
+            <div id="fortune-view" class="hidden flex-col items-center w-full transition-all duration-300 opacity-0 transform scale-95">
+                <div class="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-xl border border-white/50 mb-8 w-full text-center">
+                    <p id="fortune-date" class="text-sm font-semibold text-indigo-500 mb-4 tracking-wide"></p>
+                    <p id="fortune-text" class="text-xl leading-relaxed text-slate-700 font-medium"></p>
+                </div>
+                <button
+                    onclick="handleGoBack()"
+                    class="flex items-center gap-2 px-6 py-3 text-sm font-medium text-slate-600 transition-colors bg-white/50 rounded-full hover:bg-white hover:text-indigo-600 shadow-sm"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    돌아가기
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Floating Buttons -->
+    <div class="fixed bottom-6 left-6 z-20">
+        <button
+            onclick="openModal('review-modal')"
+            class="flex items-center justify-center w-14 h-14 bg-white text-indigo-600 rounded-full shadow-lg hover:bg-indigo-50 hover:scale-110 transition-all duration-200 border border-indigo-100"
+            title="리뷰 보기"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+        </button>
+    </div>
+
+    <div class="fixed top-6 right-6 z-20">
+        <button
+            onclick="openModal('dev-modal')"
+            class="flex items-center justify-center w-14 h-14 bg-slate-800 text-slate-200 rounded-full shadow-lg hover:bg-slate-700 hover:scale-110 transition-all duration-200"
+            title="개발자 모드"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+    </div>
+
+    <div class="fixed bottom-6 right-6 z-20">
+        <button
+            onclick="openModal('market-modal')"
+            class="flex items-center justify-center w-14 h-14 bg-yellow-400 text-yellow-900 rounded-full shadow-lg hover:bg-yellow-300 hover:scale-110 transition-all duration-200 border border-yellow-200"
+            title="행운 마켓"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>
+        </button>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] transform transition-transform duration-200 scale-95" id="review-modal-content">
+            <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" class="text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                    사용자 리뷰
+                </h2>
+                <button onclick="closeModal('review-modal')" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            
+            <div id="review-list" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 no-scrollbar">
+                <!-- Reviews will be injected here -->
+            </div>
+
+            <div class="p-4 bg-white border-t border-slate-100">
+                <form id="review-form" class="flex gap-2">
+                    <input
+                        type="text"
+                        id="review-input"
+                        placeholder="따뜻한 리뷰를 남겨주세요..."
+                        class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                        autocomplete="off"
+                    />
+                    <button 
+                        type="submit"
+                        class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                        등록
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Modal -->
+    <div id="market-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-200">
+        <div class="bg-slate-50 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transform transition-transform duration-200 scale-95" id="market-modal-content">
+            <div class="flex items-center justify-between p-6 border-b border-slate-200 bg-white">
+                <h2 class="text-xl font-bold flex items-center gap-2 text-yellow-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" class="text-yellow-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>
+                    행운 마켓
+                </h2>
+                <button onclick="closeModal('market-modal')" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-50 no-scrollbar">
+                <div id="market-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <!-- Market items will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Modal -->
+    <div id="dev-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-200">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] transform transition-transform duration-200 scale-95" id="dev-modal-content">
+            <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" class="text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    개발자 모드 (운세 관리)
+                </h2>
+                <button onclick="closeModal('dev-modal')" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            
+            <div id="dev-list" class="flex-1 overflow-y-auto p-6 space-y-3 bg-slate-50 no-scrollbar">
+                <!-- Fortunes will be injected here -->
+            </div>
+
+            <div class="p-4 bg-white border-t border-slate-100">
+                <form id="dev-form" class="flex gap-2">
+                    <input
+                        type="text"
+                        id="dev-input"
+                        placeholder="새로운 운세 문장을 입력하세요..."
+                        class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                        autocomplete="off"
+                    />
+                    <button 
+                        type="submit"
+                        class="px-6 py-3 bg-slate-800 text-white rounded-xl font-medium hover:bg-slate-700 transition-colors whitespace-nowrap"
+                    >
+                        추가
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // Data Models
+        const DEFAULT_FORTUNES = [
+            "오늘은 뜻밖의 행운이 찾아오는 기분 좋은 하루가 될 것입니다.",
+            "당신의 작은 배려가 누군가에게 큰 감동을 주는 날입니다.",
+            "오랫동안 고민하던 문제가 실마리를 찾게 될 것입니다.",
+            "새로운 도전을 시작하기에 완벽한 타이밍입니다. 자신감을 가지세요!",
+            "오늘은 무리하지 말고 잠시 쉬어가는 여유가 필요한 하루입니다."
+        ];
+
+        const MARKET_ITEMS = [
+            { id: 1, icon: "🍀", name: "네잎클로버 책갈피", price: "5,000원", desc: "책 사이에 꽂아두면 행운이 찾아옵니다." },
+            { id: 2, icon: "✨", name: "행운의 별가루 병", price: "12,000원", desc: "반짝이는 긍정 에너지를 담았습니다." },
+            { id: 3, icon: "🐸", name: "황금 두꺼비 조각상", price: "30,000원", desc: "재물운을 크게 불러옵니다." },
+            { id: 4, icon: "🕯️", name: "소원 성취 캔들", price: "15,000원", desc: "불을 켜면 소원이 이루어집니다." },
+            { id: 5, icon: "🧂", name: "액막이 핑크 소금", price: "8,000원", desc: "나쁜 기운을 물리쳐 줍니다." },
+            { id: 6, icon: "👛", name: "재물운 빨간 지갑", price: "45,000원", desc: "돈이 마르지 않는 마법의 지갑." },
+            { id: 7, icon: "🧶", name: "운명의 붉은 실", price: "10,000원", desc: "좋은 인연을 만나게 해줍니다." },
+            { id: 8, icon: "📜", name: "만사형통 부적", price: "20,000원", desc: "중요한 시험이나 면접에 꼭 필요합니다." },
+            { id: 9, icon: "🔮", name: "힐링 자수정", price: "35,000원", desc: "마음의 평화와 행운을 동시에." },
+        ];
+
+        let fortunes = [];
+        let reviews = [];
+
+        // Initialization
+        document.addEventListener("DOMContentLoaded", () => {
+            loadData();
+            renderMarket();
+            renderFortunes();
+            renderReviews();
+            setupFormListeners();
+        });
+
+        function loadData() {
+            const savedFortunes = localStorage.getItem('fortune-app-fortunes');
+            const savedReviews = localStorage.getItem('fortune-app-reviews');
+
+            if (savedFortunes) {
+                fortunes = JSON.parse(savedFortunes);
+            } else {
+                fortunes = [...DEFAULT_FORTUNES];
+                localStorage.setItem('fortune-app-fortunes', JSON.stringify(fortunes));
+            }
+
+            if (savedReviews) {
+                reviews = JSON.parse(savedReviews);
+            }
+        }
+
+        function saveData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        // View Transitions
+        function handleShowFortune() {
+            if (fortunes.length === 0) {
+                alert("등록된 운세가 없습니다. 개발자 모드에서 추가해주세요.");
+                return;
+            }
+
+            const mainView = document.getElementById('main-view');
+            const fortuneView = document.getElementById('fortune-view');
+            const fortuneText = document.getElementById('fortune-text');
+            const fortuneDate = document.getElementById('fortune-date');
+
+            // Pick random fortune
+            const randomIndex = Math.floor(Math.random() * fortunes.length);
+            fortuneText.innerText = `"${fortunes[randomIndex]}"`;
+
+            // Set Date
+            const today = new Date();
+            const dateString = new Intl.DateTimeFormat('ko-KR', { 
+                year: 'numeric', month: 'long', day: 'numeric' 
+            }).format(today);
+            fortuneDate.innerText = dateString;
+
+            // Animate transition
+            mainView.classList.add('hidden');
+            mainView.classList.remove('flex');
+            
+            fortuneView.classList.remove('hidden');
+            fortuneView.classList.add('flex');
+            
+            // Trigger reflow to apply transition
+            void fortuneView.offsetWidth; 
+            
+            fortuneView.classList.remove('opacity-0', 'scale-95');
+            fortuneView.classList.add('opacity-100', 'scale-100');
+        }
+
+        function handleGoBack() {
+            const mainView = document.getElementById('main-view');
+            const fortuneView = document.getElementById('fortune-view');
+
+            fortuneView.classList.remove('opacity-100', 'scale-100');
+            fortuneView.classList.add('opacity-0', 'scale-95');
+
+            setTimeout(() => {
+                fortuneView.classList.add('hidden');
+                fortuneView.classList.remove('flex');
+                
+                mainView.classList.remove('hidden');
+                mainView.classList.add('flex');
+            }, 300);
+        }
+
+        // Modals Management
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(modalId + '-content');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Trigger reflow
+            void modal.offsetWidth;
+            
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(modalId + '-content');
+
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 200);
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modals = ['review-modal', 'market-modal', 'dev-modal'];
+            modals.forEach(id => {
+                const modal = document.getElementById(id);
+                if (event.target === modal) {
+                    closeModal(id);
+                }
+            });
+        }
+
+        // Form Listeners
+        function setupFormListeners() {
+            // Dev Form
+            document.getElementById('dev-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const input = document.getElementById('dev-input');
+                const text = input.value.trim();
+                
+                if (text) {
+                    fortunes.unshift(text); // Add to beginning
+                    saveData('fortune-app-fortunes', fortunes);
+                    input.value = '';
+                    renderFortunes();
+                }
+            });
+
+            // Review Form
+            document.getElementById('review-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const input = document.getElementById('review-input');
+                const text = input.value.trim();
+                
+                if (text) {
+                    const newReview = {
+                        id: Date.now(),
+                        text: text,
+                        date: new Intl.DateTimeFormat('ko-KR').format(new Date())
+                    };
+                    reviews.unshift(newReview);
+                    saveData('fortune-app-reviews', reviews);
+                    input.value = '';
+                    renderReviews();
+                }
+            });
+        }
+
+        // Render Functions
+        function renderFortunes() {
+            const container = document.getElementById('dev-list');
+            container.innerHTML = '<h3 class="text-sm font-semibold text-slate-500 mb-2 sticky top-0 bg-slate-50 py-1">등록된 운세 목록</h3>';
+            
+            if (fortunes.length === 0) {
+                container.innerHTML += `<div class="text-center text-slate-400 py-4">등록된 운세가 없습니다.</div>`;
+                return;
+            }
+
+            fortunes.forEach((fortune, index) => {
+                const item = document.createElement('div');
+                item.className = 'bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center group mt-2';
+                item.innerHTML = `
+                    <p class="text-slate-700 text-sm flex-1 mr-4">${fortune}</p>
+                    <button onclick="deleteFortune(${index})" class="text-slate-300 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function deleteFortune(index) {
+            fortunes.splice(index, 1);
+            saveData('fortune-app-fortunes', fortunes);
+            renderFortunes();
+        }
+
+        function renderReviews() {
+            const container = document.getElementById('review-list');
+            container.innerHTML = '';
+            
+            if (reviews.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-10">첫 번째 리뷰를 남겨주세요!</div>`;
+                return;
+            }
+
+            reviews.forEach((review) => {
+                const item = document.createElement('div');
+                item.className = 'bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-start group';
+                item.innerHTML = `
+                    <div>
+                        <p class="text-slate-700 text-sm">${review.text}</p>
+                        <span class="text-xs text-slate-400 mt-2 block">${review.date}</span>
+                    </div>
+                    <button onclick="deleteReview(${review.id})" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function deleteReview(id) {
+            reviews = reviews.filter(review => review.id !== id);
+            saveData('fortune-app-reviews', reviews);
+            renderReviews();
+        }
+
+        function renderMarket() {
+            const container = document.getElementById('market-list');
+            
+            MARKET_ITEMS.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all flex flex-col items-center text-center group cursor-pointer';
+                card.innerHTML = `
+                    <div class="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">${item.icon}</div>
+                    <h3 class="font-bold text-slate-800 mb-1">${item.name}</h3>
+                    <p class="text-yellow-600 font-semibold mb-3">${item.price}</p>
+                    <p class="text-sm text-slate-500 flex-1">${item.desc}</p>
+                    <button onclick="event.stopPropagation(); alert('${item.name} 구매 기능은 데모 버전입니다.')" class="mt-4 w-full py-2 bg-yellow-100 text-yellow-700 font-medium rounded-xl hover:bg-yellow-400 hover:text-yellow-900 transition-colors">
+                        구매하기
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
